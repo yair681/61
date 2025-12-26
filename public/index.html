@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>הארנק הכיתתי</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; text-align: center; background-color: #f0f2f5; padding: 20px; }
+        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
+        input, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; }
+        button { background-color: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { background-color: #0056b3; }
+        h1 { color: #333; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>הארנק הדיגיטלי 🎓</h1>
+        <p>ברוכים הבאים למערכת הפרסים</p>
+        
+        <input type="password" id="code" placeholder="הכנס את הסיסמה/קוד האישי שלך">
+        <button onclick="login()">כניסה</button>
+        <p id="error" style="color:red;"></p>
+    </div>
+
+    <script>
+        async function login() {
+            const code = document.getElementById('code').value.trim();
+
+            if (!code) {
+                document.getElementById('error').innerText = 'נא להזין סיסמה או קוד';
+                return;
+            }
+
+            const res = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                if (data.role === 'superadmin') {
+                    // מנהל-על
+                    localStorage.setItem('superadminAuth', 'true');
+                    localStorage.setItem('superadminName', data.name);
+                    window.location.href = 'superadmin.html';
+                } else if (data.role === 'teacher') {
+                    // מורה רגיל
+                    localStorage.setItem('teacherAuth', 'true');
+                    localStorage.setItem('classId', data.classId);
+                    localStorage.setItem('className', data.className);
+                    localStorage.setItem('teacherName', data.teacherName);
+                    window.location.href = 'admin.html';
+                } else {
+                    // תלמיד
+                    localStorage.setItem('studentCode', data.studentId);
+                    localStorage.setItem('studentName', data.name);
+                    localStorage.setItem('classId', data.classId);
+                    localStorage.setItem('className', data.className);
+                    window.location.href = 'student.html';
+                }
+            } else {
+                document.getElementById('error').innerText = data.message;
+            }
+        }
+
+        // אפשרות ללחוץ Enter להתחברות
+        document.getElementById('code').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                login();
+            }
+        });
+    </script>
+</body>
+</html>
